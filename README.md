@@ -11,9 +11,9 @@
 
 <h3>ScreenShots</h3>
 
-<img src = "ss_login.png" />
-<img src = "ss_home.png" />
-<img src = "ss_signup.png" />
-<img src = "ss_message.png" />
-<img src = "ss_search.png" />
-<img src = "ss_updateprofile.png" />
+<p align="center" >
+<img src = "ss_login.png" width = 45%/>  <img src = "ss_home.png" width = 45%/>
+<img src = "ss_signup.png" width = 45%/><img src = "ss_message.png" width = 45%/>
+<img src = "ss_search.png" width = 45%/>
+<img src = "ss_updateprofile.png" width = 45%/>
+</p>
