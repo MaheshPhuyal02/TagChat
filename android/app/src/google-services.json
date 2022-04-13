@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "405321879160",
+    "firebase_url": "https://hotmessage-00-default-rtdb.firebaseio.com",
+    "project_id": "hotmessage-00",
+    "storage_bucket": "hotmessage-00.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405321879160:android:346e9f315fe3f19b00278d",
+        "android_client_info": {
+          "package_name": "com.mp.tagchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "405321879160-7qiir59c33e5b0m29hf20gqvr78nbuel.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDA9yF7hvShJiVPTlBG_jZELwR5h9UgI9A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "405321879160-7qiir59c33e5b0m29hf20gqvr78nbuel.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
