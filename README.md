@@ -11,3 +11,11 @@
 
 <h3>ScreenShots</h3>
 
+<p align="center" >
+<img src = "ss_login.png" width = 45%/>  <img src = "ss_home.png" width = 45%/>
+<img src = "ss_signup.png" width = 45%/><img src = "ss_message.png" width = 45%/>
+<img src = "ss_search.png" width = 45%/>
+<img src = "ss_updateprofile.png" width = 45%/>
+</p>
+<h6>Sample apk</h6>
+<a href ="https://drive.google.com/file/d/1ZBmUBRkTpvu4WaSI3kUHKOcPZBG_zKnz/view?usp=drivesdk" >Drive</a>
