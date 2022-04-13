@@ -1,16 +1,13 @@
-# hotmessage
+# TagChat
+<h4>What is TagChat?</h4>
+<p>Tag chat is a simple and basic chat app created with flutter.</p>
+<h3>Description</h3>
+<li>TagChat use firestore as backend</li>
+<li>Currently it supports login with email and password.</li>
+<li>You can add your name, email, bio, tag and profile picture</li>
+<li>Tag is used to find people, it cannot be changed and must be unique</li>
+<li>It supports last message, seen, sent time and text message</li>
+<li>You can search people from your chatlist.</li>
 
-A new Flutter project.
+<h3>ScreenShots</h3>
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
