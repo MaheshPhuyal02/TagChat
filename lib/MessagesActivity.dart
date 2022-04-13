@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_time_ago/get_time_ago.dart';
 import 'package:hotmessage/Constants.dart';
 import 'package:hotmessage/MessageModel.dart';
 import 'package:hotmessage/UserModel.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class chatDocsActivity extends StatelessWidget {
@@ -21,7 +25,7 @@ class chatDocsActivity extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: const MessagesPage(
-          title: 'Flutter Demo Home Page', from: "f", herRealID: "f"),
+          title: 'Flutter Demo Home Page', from: "f", herRealID: "f", herName: "", herImage:  "", herTag: "",),
     );
   }
 }
@@ -30,11 +34,18 @@ class MessagesPage extends StatefulWidget {
   const MessagesPage({Key? key,
     required this.title,
     required this.from,
-    required this.herRealID})
+    required this.herRealID,
+     required this.herName,
+     required this.herTag,
+     required this.herImage,
+  })
       : super(key: key);
   final String title;
   final String from;
   final String herRealID;
+  final String herName;
+  final String herTag;
+  final String herImage;
 
   @override
   State<MessagesPage> createState() => _MyMessagePageState();
@@ -86,21 +97,19 @@ class _MyMessagePageState extends State<MessagesPage> {
               .then((value) {
               name = value["name"];
               tag = value["tag"];
-
-
             myImg = value["image"]!;
           });
-          FirebaseFirestore.instance
-              .collection("users")
-              .doc(herID)
-              .get()
-              .then((value) {
-            setState(() {
-              herName = value["name"];
-              herTag = value["tag"];
-              herImg = value["image"];
-            });
-          });
+          // FirebaseFirestore.instance
+          //     .collection("users")
+          //     .doc(herID)
+          //     .get()
+          //     .then((value) {
+          //   setState(() {
+          //     herName = value["name"];
+          //     herTag = value["tag"];
+          //     herImg = value["image"];
+          //   });
+          // });
         }
       } catch (e) {}
 
@@ -108,6 +117,11 @@ class _MyMessagePageState extends State<MessagesPage> {
 
     if (widget.from == "search") {
       herID = widget.herRealID;
+    } else {
+        herImg = widget.herImage;
+        herName = widget.herName;
+        herTag = widget.herTag;
+
     }
     super.initState();
   }
@@ -164,8 +178,8 @@ class _MyMessagePageState extends State<MessagesPage> {
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           color: Color(0xffE2E2E2),
-                          fontSize: 13,
-                        ),
+                          fontSize: 12,
+                        )
                       ),
                     )
                   ]),
@@ -278,19 +292,20 @@ class _MyMessagePageState extends State<MessagesPage> {
                                                           .min,
                                                       children: <Widget>[
                                                         Container(
-                                                          child: Text(
+                                                          child:
+                                                         chatDocs[index]["messageType"] == Constants.MESSAGE_TYPE_TEXT?
+                                                      Text(
                                                             message,
                                                             style: TextStyle(
-                                                                color: chatDocs[index]
-                                                                [
-                                                                "senderID"] ==
+                                                                color: chatDocs[index]["senderID"] ==
                                                                     uid
                                                                     ? Colors
                                                                     .white
                                                                     : Colors
                                                                     .black,
                                                                 fontSize: 19),
-                                                          ),
+                                                          ):
+                                                          Image.network(message),
                                                         ),
                                                         SizedBox(
                                                           width: 8.0,
@@ -308,7 +323,7 @@ class _MyMessagePageState extends State<MessagesPage> {
                                                                   : GetTimeAgo.parse(chatDocs[index]["dateTime"].toDate())+  " Delivered"
                                                                   : GetTimeAgo.parse(chatDocs[index]["dateTime"].toDate()),
                                                               style: TextStyle(
-                                                                fontSize: 13.0,
+                                                                fontSize: 11.0,
                                                                 color: chatDocs[index]
                                                                 [
                                                                 "senderID"] ==
@@ -333,6 +348,23 @@ class _MyMessagePageState extends State<MessagesPage> {
                                   }),),
                             Row(
                               children: [
+                                InkWell(
+                                  onTap: () async {
+                                    final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 500, maxHeight: 500, imageQuality: 50);
+                                    if(image?.path != null) {
+                                      createMessage(image!.path, Constants.MESSAGE_TYPE_IMAGE);
+                                    }
+                                  },
+                                  child: SizedBox(
+                                    height: 42,
+                                    width: 42,
+                                    child: Icon(
+                                      Icons.photo_camera,
+                                      size: 32,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                ),
                                 Expanded(
                                   child: Container(
                                     height: 45,
@@ -362,7 +394,7 @@ class _MyMessagePageState extends State<MessagesPage> {
                                 ),
                                 InkWell(
                                   onTap: () {
-                                    sendMessage(writeMessaged);
+                                    createMessage(writeMessaged, Constants.MESSAGE_TYPE_TEXT);
                                   },
                                   child: SizedBox(
                                     height: 42,
@@ -381,14 +413,27 @@ class _MyMessagePageState extends State<MessagesPage> {
             }));
   }
 
-  sendMessage(message) {
+  createMessage(message, type){
+    if(type == Constants.MESSAGE_TYPE_IMAGE) {
+      Reference ref = FirebaseStorage.instance.ref("profile")
+          .child(key)
+          .child(FirebaseFirestore.instance.collection("chats").doc().id + ".png");
+      UploadTask uploadTask = ref.putFile(File(message));
+      uploadTask.whenComplete(() async {
+        String url = await ref.getDownloadURL();
+        sendMessage(url, Constants.MESSAGE_TYPE_IMAGE);
+      });
+    } else {
+      sendMessage(message, type);
+    }
+  }
+  sendMessage(message, type) {
+
     if (message
         .toString()
         .isNotEmpty) {
       DateTime currentPhoneDate = DateTime.now(); //DateTime
-
       Timestamp myTimeStamp = Timestamp.fromDate(currentPhoneDate);
-
       if (chatDocs.length <= 0) {
         FirebaseFirestore.instance.collection("chats").doc(key).set({
           "requestorID": FirebaseAuth.instance.currentUser?.uid,
@@ -404,7 +449,7 @@ class _MyMessagePageState extends State<MessagesPage> {
         });
         FirebaseFirestore.instance
             .collection("users")
-            .doc(herID)
+            .doc(reqID)
             .get()
             .then((value) {
           setState(() {
@@ -432,7 +477,7 @@ class _MyMessagePageState extends State<MessagesPage> {
         'seen': false,
         'id': createdID,
         'senderID': FirebaseAuth.instance.currentUser?.uid,
-        'messageType': Constants.MESSAGE_TYPE_TEXT,
+        'messageType': type,
       });
       FirebaseFirestore.instance
           .collection("users")
@@ -443,12 +488,12 @@ class _MyMessagePageState extends State<MessagesPage> {
         'id': key,
         'herImage': herImg,
         'lastMessage': message,
+        'lastMessageType': type,
         'lastDate': myTimeStamp,
         'name': herName,
         'seen': false,
         'tag': herTag,
       });
-
       FirebaseFirestore.instance
           .collection("users")
           .doc(herID)
@@ -459,6 +504,7 @@ class _MyMessagePageState extends State<MessagesPage> {
         'herImage': herImg,
         'lastMessage': message,
         'lastDate': myTimeStamp,
+        'lastMessageType': type,
         'name': name,
         'seen': false,
         'tag': tag,

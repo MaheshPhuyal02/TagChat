@@ -104,7 +104,7 @@ class _MyHomePageState extends State<EditProfilePage> {
                         child: GestureDetector(
                           onTap: () async {
 
-                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 500, maxHeight: 500, imageQuality: 50);
                             if(image?.path != null)
                            setState(() {
                              img = image!.path;
@@ -217,7 +217,7 @@ class _MyHomePageState extends State<EditProfilePage> {
                           },
                           child: Text("Cancel", style: TextStyle(
                             color: Colors.black54,
-                            fontSize: 28
+                            fontSize: 22
                           ),)),
                     ),
                   ),
@@ -278,7 +278,7 @@ class _MyHomePageState extends State<EditProfilePage> {
                           },
                           child: Text("Save", style: TextStyle(
                             color: Colors.white,
-                            fontSize: 28
+                            fontSize: 22
                           ),)),
                     ),
                   ),

@@ -9,6 +9,7 @@ import 'package:hotmessage/ConnectionChecker.dart';
 import 'package:hotmessage/EditProfile.dart';
 import 'package:hotmessage/SearchActivity.dart';
 import 'package:hotmessage/SignUpActivity.dart';
+import 'Constants.dart';
 import 'MessagesActivity.dart';
 import 'UserModel.dart';
 import 'online_model.dart';
@@ -52,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Map _source = {ConnectivityResult.none: false};
   final ConnectionChecker _connectivity = ConnectionChecker.instance;
   String img = "not";
+  String myTag = "@";
   List<Map<String, dynamic>> mainChatList = [];
   int _counter = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -73,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         img = element.get("image");
       });
+      myTag = element.get("tag");
     });
   }
 
@@ -98,6 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
           "seen": element.get("seen"),
           "herImg": element.get("herImage")!,
           "lastMessage": element.get("lastMessage"),
+          "lastMessageType": element.get("lastMessageType"),
           "lastDate": element.get("lastDate"),
           "name": element.get("name"),
           "tag": element.get("tag"),
@@ -231,6 +235,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                                       : "",
                                                   from: "message",
                                                   herRealID: "",
+                                                  herName: mainChatList[index]["name"],
+                                                  herTag: mainChatList[index]["tag"],
+                                                  herImage: mainChatList[index]["herImg"],
                                                 )));
                                   },
                                   child: Card(
@@ -283,9 +290,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                                       width: double.infinity,
                                                     ),
                                                     Container(
-                                                      child: Text(
+                                                      child:
+                                                      Text(
+                                                        mainChatList[index]["lastMessageType"] == Constants.MESSAGE_TYPE_TEXT?
                                                         mainChatList[index]
-                                                            ["lastMessage"],
+                                                            ["lastMessage"]:
+                                                        "Sent a photo",
                                                         style: const TextStyle(
                                                           fontSize: 16,
                                                         ),
@@ -398,7 +408,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                         .id,
                                                     from: "search",
                                                     herRealID: documentList[0]
-                                                        .get("id"),
+                                                        .get("id"), herTag: '', herName: '', herImage: '',
                                                   )));
                                     } else {
                                       ScaffoldMessenger.of(context)
@@ -408,6 +418,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                         duration: Duration(milliseconds: 800),
                                       ));
                                     }
+                                  }
+                                  else if(searchTag == myTag){
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(
+                                          "I didn't find any reason to message yourself."),
+                                      duration: Duration(milliseconds: 800),
+                                    ));
                                   } else {
                                     //    print("already exist");
                                     Navigator.of(context).pop();
@@ -421,6 +439,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                                         ["id"],
                                                     from: "ma",
                                                     herRealID: "",
+                                                    herName: mainChatList[cPos]["name"],
+                                                    herTag: mainChatList[cPos]["tag"],
+                                                    herImage: mainChatList[cPos]["herImage"],
                                                   )));
                                     });
                                   }

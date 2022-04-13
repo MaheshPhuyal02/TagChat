@@ -239,6 +239,8 @@ class _MyHomePageState extends State<SignUpPage> {
                                             "email": emailValue,
                                             "name": nameValue,
                                             "tag": tagValue,
+                                            "image": "",
+                                            "bio": "",
                                             "userid": user.uid,
                                           });
                                           Navigator.pop(context);
@@ -264,7 +266,7 @@ class _MyHomePageState extends State<SignUpPage> {
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         const MyApp()));
-                                          } catch (e) {};
+                                          } catch (e) {}
                                         } else {
                                           Navigator.pop(context);
                                           showAlertDialog(context, "Failed",
@@ -288,7 +290,7 @@ class _MyHomePageState extends State<SignUpPage> {
                                 }
                               },
                               child: const Text(
-                                "Continue",
+                                "Continue", 
                                 style: TextStyle(color: Colors.white),
                               )),
                         ),

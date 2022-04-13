@@ -103,7 +103,7 @@ class _MyHomePageState extends State<SearchPage> {
                                     return
                                       InkWell(
                                         onTap: (){
-                                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => MessagesPage(title: chatDocs[index]["id"], herRealID: '', from: 'm',)));
+                                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => MessagesPage(title: chatDocs[index]["id"], herRealID: '', from: 'm', herImage: '', herName: '', herTag: '',)));
                                         },
                                         child: Card(
                                           margin: EdgeInsets.all(9),
