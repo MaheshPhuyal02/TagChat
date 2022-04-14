@@ -138,7 +138,7 @@ class _MyMessagePageState extends State<MessagesPage> {
           title: Row(
             children: [
             Container(
-            width: 42,
+            width: 44,
             height: 42,
              child: CircleAvatar(
                 radius: 56,
@@ -147,7 +147,9 @@ class _MyMessagePageState extends State<MessagesPage> {
                     child:
                     herImg !=  ""?(Image.network(
                       herImg,
-                      fit: BoxFit.fitHeight,
+                      fit: BoxFit.cover,
+                      height: 42,
+                      width: 44,
                     )): Image.asset("assets/user.png")),
               )),
               Expanded(
@@ -350,7 +352,7 @@ class _MyMessagePageState extends State<MessagesPage> {
                                   },
                                   child: SizedBox(
                                     height: 42,
-                                    width: 42,
+                                    width: 47,
                                     child: Icon(
                                       Icons.photo_camera,
                                       size: 32,
