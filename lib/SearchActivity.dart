@@ -60,6 +60,7 @@ class _MyHomePageState extends State<SearchPage> {
     // TODO: implement build
     return Scaffold(
         appBar: buildAppBar(context),
+
         body: Container(
             child: FutureBuilder(
                 initialData: FirebaseAuth.instance.currentUser,
@@ -159,12 +160,15 @@ class _MyHomePageState extends State<SearchPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
+      iconTheme: const IconThemeData(color: Colors.black),
+      elevation: 1,
+      backgroundColor: Colors.white,
       centerTitle: true,
       title: TextField(
         autofocus: true,
         cursorColor: Colors.white,
         style: TextStyle(
-          color: Colors.white,
+          color: Colors.black,
           fontSize: 20,
         ),
         controller: _controller,
@@ -177,7 +181,7 @@ class _MyHomePageState extends State<SearchPage> {
                 Icons.close,
                 color: Colors.white,
               )),
-          hintStyle: const TextStyle(color: Colors.white60),
+          hintStyle: const TextStyle(color: Colors.black54),
           hintText: "Search here",
         ),
       ),

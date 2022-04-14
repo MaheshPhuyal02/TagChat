@@ -65,8 +65,8 @@ class _MyMessagePageState extends State<MessagesPage> {
   TextEditingController controller = TextEditingController();
   ScrollController listScrollController = ScrollController();
   bool _despose = false;
-  String name = "NO Name";
-  String herName = "NO Name";
+  String name = "No Name";
+  String herName = "No Name";
   String tag = "NOTAGGUY";
   String herTag = "NOTAGGUY";
 
@@ -99,17 +99,7 @@ class _MyMessagePageState extends State<MessagesPage> {
               tag = value["tag"];
             myImg = value["image"]!;
           });
-          // FirebaseFirestore.instance
-          //     .collection("users")
-          //     .doc(herID)
-          //     .get()
-          //     .then((value) {
-          //   setState(() {
-          //     herName = value["name"];
-          //     herTag = value["tag"];
-          //     herImg = value["image"];
-          //   });
-          // });
+
         }
       } catch (e) {}
 
@@ -142,6 +132,9 @@ class _MyMessagePageState extends State<MessagesPage> {
 
     return Scaffold(
         appBar: AppBar(
+          iconTheme: IconThemeData(color: Colors.black),
+          elevation: 1,
+          backgroundColor: Colors.white,
           title: Row(
             children: [
             Container(
@@ -149,7 +142,7 @@ class _MyMessagePageState extends State<MessagesPage> {
             height: 42,
              child: CircleAvatar(
                 radius: 56,
-                backgroundColor: Colors.black,
+                backgroundColor: Colors.white,
                 child: ClipOval(
                     child:
                     herImg !=  ""?(Image.network(
@@ -166,7 +159,7 @@ class _MyMessagePageState extends State<MessagesPage> {
                       child: Text(
                         herName,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black,
                           fontSize: 18,
                         ),
                       ),
@@ -177,7 +170,7 @@ class _MyMessagePageState extends State<MessagesPage> {
                         "@" + herTag,
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          color: Color(0xffE2E2E2),
+                          color: Color(0xff242424),
                           fontSize: 12,
                         )
                       ),

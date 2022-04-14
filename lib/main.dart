@@ -9,6 +9,7 @@ import 'package:hotmessage/ConnectionChecker.dart';
 import 'package:hotmessage/EditProfile.dart';
 import 'package:hotmessage/SearchActivity.dart';
 import 'package:hotmessage/SignUpActivity.dart';
+import 'package:hotmessage/WelcomeActivity.dart';
 import 'Constants.dart';
 import 'MessagesActivity.dart';
 import 'UserModel.dart';
@@ -20,7 +21,7 @@ void main() async {
   if (FirebaseAuth.instance.currentUser != null) {
     runApp(const MyApp());
   } else {
-    runApp(const SignUpActivity());
+    runApp(const WelcomeActivity());
   }
 }
 
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Lato',
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -119,8 +121,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     print(ConnectivityResult.none.name);
     return Scaffold(
+
       key: _scaffoldKey,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
         title: Row(
           children: [
             Container(
@@ -136,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     radius: 56,
                     backgroundColor: Colors.white,
                     child: ClipOval(
-                        child: img != "not"
+                        child: img != ""
                             ? (Image.network(
                                 img,
                                 fit: BoxFit.cover,
@@ -148,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 )),
             Expanded(
               child: Container(
-                child: const Text("TagChat"),
+                child: const Text("TagChat", style: TextStyle(color: Colors.black),),
                 alignment: Alignment.center,
               ),
               flex: 1,
@@ -420,6 +425,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     }
                                   }
                                   else if(searchTag == myTag){
+                                    print("MYTAg");
                                     ScaffoldMessenger.of(context)
                                         .showSnackBar(SnackBar(
                                       content: Text(
