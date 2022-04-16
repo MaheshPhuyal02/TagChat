@@ -67,7 +67,7 @@ class _MyHomePageState extends State<SignUpPage> {
                         child: Row(
                           children: [
                             InkWell(
-                              onTap: (){
+                              onTap: () {
                                 Navigator.pop(context);
                               },
                               child: const Icon(
@@ -75,7 +75,12 @@ class _MyHomePageState extends State<SignUpPage> {
                                 size: 20,
                               ),
                             ),
-                            const Expanded(child: const Text("Create account", style:TextStyle(fontSize: 19),textAlign: TextAlign.center,))
+                            const Expanded(
+                                child: const Text(
+                              "Create account",
+                              style: TextStyle(fontSize: 19),
+                              textAlign: TextAlign.center,
+                            ))
                           ],
                         ),
                       ),
@@ -113,7 +118,8 @@ class _MyHomePageState extends State<SignUpPage> {
                                 decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.all(10),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(4)),
                                   ),
                                   labelText: "Enter Email",
                                 )),
@@ -129,7 +135,8 @@ class _MyHomePageState extends State<SignUpPage> {
                                 decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.all(10),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(4)),
                                   ),
                                   labelText: "User Name",
                                 )),
@@ -174,7 +181,6 @@ class _MyHomePageState extends State<SignUpPage> {
                                   ),
                                   labelText: 'Enter password',
                                 )),
-
                             const SizedBox(
                               height: 35,
                             ),
@@ -192,82 +198,90 @@ class _MyHomePageState extends State<SignUpPage> {
                                     //    print(iss);
                                     try {
                                       var t = [];
+                                      // print(tagValue);
+                                      bool isSubmitted = false;
                                       FirebaseFirestore.instance
                                           .collection("tags")
                                           .where("tag", isEqualTo: tagValue)
                                           .snapshots()
-                                          .forEach((element) {
-                                        element.docs.forEach((element) {
-                                          t.add(element.get("tag"));
-                                        });
-                                      });
+                                          .forEach((element) async {
+                                        if (element.docs.isEmpty) {
+                                          // Navigator.pop(context);
+                                          //  if (t.isEmpty) {
+                                          isSubmitted = true;
+                                          FirebaseAuth auth =
+                                              FirebaseAuth.instance;
+                                          try {
+                                            User? user = (await auth
+                                                    .createUserWithEmailAndPassword(
+                                              email: emailValue,
+                                              password: passValue,
+                                            ))
+                                                .user;
 
-                                      // first add the data to the Offset object
-                                      if (!t.contains(tagValue)) {
-                                        FirebaseAuth auth =
-                                            FirebaseAuth.instance;
-                                        try {
-                                          User? user = (await auth
-                                                  .createUserWithEmailAndPassword(
-                                            email: emailValue,
-                                            password: passValue,
-                                          ))
-                                              .user;
+                                            if (user != null) {
+                                              FirebaseFirestore firestore =
+                                                  FirebaseFirestore.instance;
+                                              await firestore
+                                                  .collection("users")
+                                                  .doc(user.uid)
+                                                  .set({
+                                                "email": emailValue,
+                                                "name": nameValue,
+                                                "tag": tagValue,
+                                                "image": "",
+                                                "bio": "",
+                                                "userid": user.uid,
+                                              });
+                                              //   Navigator.pop(context);
+                                              List<String> s = <String>[];
+                                              s.add(tagValue);
+                                              await FirebaseFirestore.instance
+                                                  .collection('tags')
+                                                  .doc(FirebaseFirestore
+                                                      .instance
+                                                      .collection("tags")
+                                                      .doc()
+                                                      .id)
+                                                  .set({
+                                                "tag": tagValue,
+                                                "id": FirebaseAuth
+                                                    .instance.currentUser?.uid,
+                                              });
 
-                                          if (user != null) {
-                                            FirebaseFirestore firestore =
-                                                FirebaseFirestore.instance;
-                                            await firestore
-                                                .collection("users")
-                                                .doc(user.uid)
-                                                .set({
-                                              "email": emailValue,
-                                              "name": nameValue,
-                                              "tag": tagValue,
-                                              "image": "",
-                                              "bio": "",
-                                              "userid": user.uid,
-                                            });
+
+                                                Navigator.pop(context);
+                                                Navigator.of(context)
+                                                    .pushAndRemoveUntil(
+                                                  MaterialPageRoute(
+                                                      builder: (builder) =>
+                                                          EditProfilePage(
+                                                              title: "")),
+                                                  (route) => false,
+                                                );
+
+                                            } else {
+                                              isSubmitted = false;
+                                              Navigator.pop(context);
+                                              showAlertDialog(context, "Failed",
+                                                  "Failed to create account.");
+                                            }
+                                          } catch (e) {
+                                            isSubmitted = false;
                                             Navigator.pop(context);
-                                            List<String> s = <String>[];
-                                            s.add(tagValue);
-                                            await FirebaseFirestore.instance
-                                                .collection('tags')
-                                                .doc(FirebaseFirestore.instance
-                                                    .collection("tags")
-                                                    .doc()
-                                                    .id)
-                                                .set({
-                                              "tag": tagValue,
-                                              "id": FirebaseAuth
-                                                  .instance.currentUser?.uid,
-                                            });
-                                            List<ChatListModel> chats =
-                                                <ChatListModel>[];
-
-                                            try {
-                                              Navigator.of(context)
-                                                  .pushReplacement(
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const EditProfilePage(title: "title")));
-                                            } catch (e) {}
-                                          } else {
-                                            Navigator.pop(context);
-                                            showAlertDialog(context, "Failed",
-                                                "Failed to create account.");
+                                            showAlertDialog(
+                                                context, "Error", e.toString());
                                           }
-                                        } catch (e) {
-                                          Navigator.pop(context);
-                                          showAlertDialog(
-                                              context, "Error", e.toString());
+                                        } else {
+                                          if (!isSubmitted) {
+                                            Navigator.pop(context);
+                                            showAlertDialog(
+                                                context,
+                                                "Tag Invalid",
+                                                "Tag is not available.");
+                                          }
                                         }
-                                      } else {
-                                        Navigator.pop(context);
-                                        showAlertDialog(context, "Tag Invalid",
-                                            "Tag is not available.");
-                                      }
-
+                                      });
                                       // print(has);
 
                                     } catch (e) {}

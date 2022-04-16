@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hotmessage/Dialogs.dart';
+import 'package:hotmessage/ForgotPassword.dart';
 import 'package:hotmessage/SignUpActivity.dart';
 
 import 'main.dart';
@@ -44,6 +46,7 @@ class _MyHomePageState extends State<SignInPage> {
           statusBarColor: Colors.white,
           statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: Row(
           children: [
             Expanded(
@@ -144,9 +147,14 @@ class _MyHomePageState extends State<SignInPage> {
                             padding: EdgeInsets.only(right: 4),
                             alignment: Alignment.centerRight,
                             width: double.infinity,
-                            child: Text(
-                              "Forget password?",
-                              style: TextStyle(fontSize: 18),
+                            child: InkWell(
+                              onTap: (){
+                                Navigator.push(context, MaterialPageRoute(builder:(context)=>ForgotPage(title: "title")));
+                              },
+                              child: const Text(
+                                "Forget password?",
+                                style: TextStyle(fontSize: 18),
+                              ),
                             ),
                           ),
                           const SizedBox(
@@ -163,27 +171,34 @@ class _MyHomePageState extends State<SignInPage> {
                             child: TextButton(
 
                                   onPressed: () async {
-                                    showLoaderDialog(context);
-                                    try {
-                                      User? user = (await FirebaseAuth.instance
-                                          .signInWithEmailAndPassword(
-                                        email: emailValue,
-                                        password: passValue,
-                                      ))
-                                          .user;
-                                      if (user != null) {
+                                    if(emailValue.isNotEmpty && passValue.isNotEmpty) {
+                                      showLoaderDialog(context);
+                                      try {
+                                        User? user = (await FirebaseAuth
+                                            .instance
+                                            .signInWithEmailAndPassword(
+                                          email: emailValue,
+                                          password: passValue,
+                                        ))
+                                            .user;
+                                        if (user != null) {
+                                          Navigator.pop(context);
+                                          Navigator.of(context)
+                                              .pushAndRemoveUntil(
+                                            MaterialPageRoute(builder: (builder) => MyHomePage(title: "")),
+                                                (route) => false,
+                                          );
+                                        } else {
+                                          Navigator.pop(context);
+                                        }
+                                      } catch (e) {
                                         Navigator.pop(context);
-                                        Navigator.of(context).pushReplacement(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                const MyApp()));
-                                      } else {
-                                        Navigator.pop(context);
+                                        showAlertDialog(
+                                            context, "Error Login",
+                                             e.toString());
                                       }
-                                    } catch (e) {
-                                      Navigator.pop(context);
-                                      showAlertDialog(
-                                          context, "Error Login", e.toString());
+                                    } else {
+                                      Dialogs.showAlertDialog(context, "Error", "Cannot process email or password is empty.");
                                     }
                                  },
 

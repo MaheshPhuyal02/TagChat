@@ -5,12 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get_time_ago/get_time_ago.dart';
 import 'package:hotmessage/Constants.dart';
 import 'package:hotmessage/MessageModel.dart';
 import 'package:hotmessage/UserModel.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class chatDocsActivity extends StatelessWidget {
   const chatDocsActivity({Key? key}) : super(key: key);
@@ -53,7 +53,6 @@ class MessagesPage extends StatefulWidget {
 
 class _MyMessagePageState extends State<MessagesPage> {
   // List<Map<String, dynamic>> chatDocs = [];
-  late bool accepted = false;
   String reqID = "";
   String acceptorID = "";
   String key = "";
@@ -81,7 +80,6 @@ class _MyMessagePageState extends State<MessagesPage> {
     FirebaseFirestore.instance.collection('chats').doc(key);
     documentReference.snapshots().listen((querySnapshot) {
       try {
-        accepted = querySnapshot.get("accepted");
         acceptorID = querySnapshot.get("acceptorID");
         reqID = querySnapshot.get("requestorID");
         if (reqID == myID) {
@@ -89,7 +87,6 @@ class _MyMessagePageState extends State<MessagesPage> {
         } else {
           herID = reqID;
         }
-        if (accepted) {
           FirebaseFirestore.instance
               .collection("users")
               .doc(myID)
@@ -100,19 +97,43 @@ class _MyMessagePageState extends State<MessagesPage> {
             myImg = value["image"]!;
           });
 
-        }
+        FirebaseFirestore.instance
+            .collection("users")
+            .doc(herID)
+            .get()
+            .then((value) {
+          // setState(() {
+          if (widget.herTag != "" || widget.herName != "" ||
+              widget.herImage != "") {
+            print("Not null");
+            if (value["name"] != widget.herName ||
+                value["tag"] != widget.herTag ||
+                value["image"] != widget.herImage) {
+              setState(() {
+                herName = value["name"];
+                herTag = value["tag"];
+                herImg = value["image"];
+              });
+            }
+          } else {
+            print("NULL");
+          }
+        });
+
       } catch (e) {}
+      if (widget.from == "search") {
+        herID = widget.herRealID;
+      } else {
+        setState(() {
+          herImg = widget.herImage;
+          herName = widget.herName;
+          herTag = widget.herTag;
+        });
+
+        print("widget");
+      }
 
     });
-
-    if (widget.from == "search") {
-      herID = widget.herRealID;
-    } else {
-        herImg = widget.herImage;
-        herName = widget.herName;
-        herTag = widget.herTag;
-
-    }
     super.initState();
   }
 
@@ -311,12 +332,11 @@ class _MyMessagePageState extends State<MessagesPage> {
                                                                 .only(
                                                                 top: 6.0),
                                                             child: Text(
-                                                              index == 0
-                                                                  ? chatDocs[index]
-                                                              ["seen"]
-                                                                  ? GetTimeAgo.parse(chatDocs[index]["dateTime"].toDate())+" Seen"
-                                                                  : GetTimeAgo.parse(chatDocs[index]["dateTime"].toDate())+  " Delivered"
-                                                                  : GetTimeAgo.parse(chatDocs[index]["dateTime"].toDate()),
+                                                              index == 0 ?
+                                                              chatDocs[index]["seen"]?
+                                                              getTimeAgo(chatDocs[index]['dateTime'])+" Seen"
+                                                                  : getTimeAgo(chatDocs[index]['dateTime'])+  " Delivered"
+                                                              : getTimeAgo(chatDocs[index]['dateTime']),
                                                               style: TextStyle(
                                                                 fontSize: 11.0,
                                                                 color: chatDocs[index]
@@ -407,7 +427,10 @@ class _MyMessagePageState extends State<MessagesPage> {
                   });
             }));
   }
-
+  String getTimeAgo(s){
+    final date = s.toDate();
+    return timeago.format(date).toString();
+  }
   createMessage(message, type){
     if(type == Constants.MESSAGE_TYPE_IMAGE) {
       Reference ref = FirebaseStorage.instance.ref("profile")
@@ -429,31 +452,16 @@ class _MyMessagePageState extends State<MessagesPage> {
         .isNotEmpty) {
       DateTime currentPhoneDate = DateTime.now(); //DateTime
       Timestamp myTimeStamp = Timestamp.fromDate(currentPhoneDate);
+
       if (chatDocs.length <= 0) {
         FirebaseFirestore.instance.collection("chats").doc(key).set({
           "requestorID": FirebaseAuth.instance.currentUser?.uid,
           "createdTime": myTimeStamp,
-          "accepted": false,
           "acceptorID": this.herID,
         });
         //  reqID = FirebaseAuth.instance.currentUser?.uid.toString();
-      } else if (reqID != FirebaseAuth.instance.currentUser?.uid && !accepted) {
-        FirebaseFirestore.instance.collection("chats").doc(key).update({
-          "acceptorID": FirebaseAuth.instance.currentUser?.uid,
-          "accepted": true,
-        });
-        FirebaseFirestore.instance
-            .collection("users")
-            .doc(reqID)
-            .get()
-            .then((value) {
-          setState(() {
-            herName = value["name"];
-            herTag = value["tag"];
-            herImg = value["image"];
-          });
-        });
-      } else {}
+      }
+
       String createdID = FirebaseFirestore.instance
           .collection("chats")
           .doc(key)
@@ -496,7 +504,7 @@ class _MyMessagePageState extends State<MessagesPage> {
           .doc(key)
           .set({
         'id': key,
-        'herImage': herImg,
+        'herImage': myImg,
         'lastMessage': message,
         'lastDate': myTimeStamp,
         'lastMessageType': type,

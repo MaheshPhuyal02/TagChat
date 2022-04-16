@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hotmessage/Dialogs.dart';
+import 'package:hotmessage/WelcomeActivity.dart';
 import 'package:hotmessage/main.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -28,43 +29,104 @@ class _MyHomePageState extends State<EditProfilePage> {
   TextEditingController tagController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
-  void getProfileData(){
-    FirebaseFirestore.instance.collection("users")
+  void getProfileData() {
+    FirebaseFirestore.instance
+        .collection("users")
         .doc(FirebaseAuth.instance.currentUser?.uid)
-        .snapshots().forEach((element) {
-          setState(() {
-            emailController.text = element.get("email");
-            tagController.text = element.get("tag");
-            nameController.text = element.get("name");
-            bioController.text = element.get("bio");
-            img = element.get("image");
-            print(img);
-          });
+        .snapshots()
+        .forEach((element) {
+      setState(() {
+        emailController.text = element.get("email");
+        tagController.text = element.get("tag");
+        nameController.text = element.get("name");
+        bioController.text = element.get("bio");
+        img = element.get("image");
+        print(img);
+      });
     });
-
   }
-@override
+
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getProfileData();
   }
-  ImageProvider getImage(){
-    if(img == "") 
+
+  ImageProvider getImage() {
+    if (img == "")
       return AssetImage("assets/user.png");
-    else if(img.startsWith("https://"))
+    else if (img.startsWith("https://"))
       return NetworkImage(img) as ImageProvider;
     else
       return FileImage(File(img));
   }
+
   @override
   Widget build(BuildContext context) {
-
     bool _loading = false;
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: const Text("Update profile")),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: IconThemeData(color: Colors.black),
+        title: Row(
+          children: [
+            Expanded(
+                child: Center(
+                    child: Text(
+              "Update profile",
+              style: TextStyle(color: Colors.black),
+            ))),
+            InkWell(
+                onTap: () {
+                  // mess = mess.toString().lastIndexOf("]");
+                  Widget okButton = TextButton(
+                    child: const Text("Cancel", style: TextStyle(
+                      color: Colors.black
+                    ),),
+                    onPressed: () {
+                      try {
+                        Navigator.pop(context);
+                      } catch (e) {}
+                    },
+                  );
+                  Widget cancelButton = TextButton(
+                    child: const Text("Logout"),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      FirebaseAuth.instance.signOut();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (builder) => WelcomeActivity()),
+                            (route) => false,
+                      );
+                    },
+                  );
+
+                  // set up the AlertDialog
+                  AlertDialog alert = AlertDialog(
+                    title: Text("Log out"),
+                    content: Text("Are you sure want to logout?"),
+                    actions: [
+                      cancelButton,
+                      okButton,
+                    ],
+                  );
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return alert;
+                    },
+                  );
+
+                },
+                child: Icon(
+                  Icons.exit_to_app,
+                  color: Colors.black,
+                )),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -80,13 +142,12 @@ class _MyHomePageState extends State<EditProfilePage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   image: DecorationImage(
-                    image:getImage(),
+                    image: getImage(),
                     fit: BoxFit.cover,
                   ),
                 ),
                 child: Stack(
                   children: [
-                  
                     new Positioned(
                       right: 0.0,
                       bottom: 3.0,
@@ -94,7 +155,7 @@ class _MyHomePageState extends State<EditProfilePage> {
                         constraints:
                             new BoxConstraints(maxHeight: 50.0, maxWidth: 50.0),
                         decoration: new BoxDecoration(
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                                 color: Color(0xFFdedede), offset: Offset(2, 2)),
                           ],
@@ -103,13 +164,15 @@ class _MyHomePageState extends State<EditProfilePage> {
                         ),
                         child: GestureDetector(
                           onTap: () async {
-
-                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 500, maxHeight: 500, imageQuality: 50);
-                            if(image?.path != null)
-                           setState(() {
-                             img = image!.path;
-                           });
-
+                            final XFile? image = await _picker.pickImage(
+                                source: ImageSource.gallery,
+                                maxWidth: 500,
+                                maxHeight: 500,
+                                imageQuality: 50);
+                            if (image?.path != null)
+                              setState(() {
+                                img = image!.path;
+                              });
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -178,7 +241,7 @@ class _MyHomePageState extends State<EditProfilePage> {
                 height: 20,
               ),
               TextField(
-                enabled: false,
+                  enabled: false,
                   controller: emailController,
                   style: TextStyle(fontSize: 17),
                   maxLines: 1,
@@ -186,7 +249,6 @@ class _MyHomePageState extends State<EditProfilePage> {
                   onChanged: (value) {
                     bio = value;
                   },
-
                   decoration: const InputDecoration(
                     filled: true,
                     fillColor: Colors.black12,
@@ -202,84 +264,111 @@ class _MyHomePageState extends State<EditProfilePage> {
                 children: [
                   Expanded(
                     child: Container(
-              margin: EdgeInsets.only(left: 5),
+                      margin: EdgeInsets.only(left: 5),
                       decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.all(Radius.circular(8))
-                      ),
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.all(Radius.circular(8))),
                       child: TextButton(
                           onPressed: () {
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);
                             } else {
-                              SystemNavigator.pop();
+                              Navigator.of(context)
+                                  .pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (builder) => MyHomePage(title: "")),
+                                    (route) => false,
+                              );
                             }
                           },
-                          child: Text("Cancel", style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 22
-                          ),)),
+                          child: Text(
+                            "Cancel",
+                            style:
+                                TextStyle(color: Colors.black54, fontSize: 22),
+                          )),
                     ),
                   ),
                   Expanded(
                     child: Container(
                       margin: EdgeInsets.only(left: 40, right: 5),
                       decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.all(Radius.circular(8))
-                      ),
-                      child:  _loading ? CircularProgressIndicator() : TextButton(
-                          onPressed: () {
-                            if(img.startsWith("https")){
-                              FirebaseFirestore.instance
-                                  .collection("users").doc(FirebaseAuth.instance.currentUser?.uid)
-                                  .update({
-                                   "name" : nameController.text,
-                                   "bio" : bioController.text,
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.all(Radius.circular(8))),
+                      child: _loading
+                          ? CircularProgressIndicator()
+                          : TextButton(
+                              onPressed: () {
+                                if (img.startsWith("https")) {
+                                  FirebaseFirestore.instance
+                                      .collection("users")
+                                      .doc(FirebaseAuth
+                                          .instance.currentUser?.uid)
+                                      .update({
+                                    "name": nameController.text,
+                                    "bio": bioController.text,
                                   });
-                              if (Navigator.canPop(context)) {
-                                Navigator.pop(context);
-                              } else {
-                                SystemNavigator.pop();
-                              }
-                            } else if(img != ""){
-                              print("Uploading");
-                              Dialogs.showLoaderDialog(context);
-                               String? fN = "${FirebaseAuth.instance.currentUser?.uid.toString()}.png";
-                            Reference ref = FirebaseStorage.instance.ref("profile")
-                                  .child(fN);
-                              UploadTask uploadTask = ref.putFile(File(img));
-                              uploadTask.whenComplete(() async {
-                               String url = await ref.getDownloadURL();
-                               FirebaseFirestore.instance
-                                   .collection("users").doc(FirebaseAuth.instance.currentUser?.uid)
-                                   .update({
-                                 "name" : nameController.text,
-                                 "image" : url,
-                                 "bio" : bioController.text,
-                               });
-                               if (Navigator.canPop(context)) {
-                                 Navigator.pop(context);
-                                 Navigator.pop(context);
-                               } else {
-                                 SystemNavigator.pop();
-                                 SystemNavigator.pop();
-                               }
-                                // print("Completed");
-                               // print(url);
-                              }).catchError((onError) {
-                                setState(() {
-                                  _loading = false;
-                                });
-                                Dialogs.showAlertDialog(context, "Failed to upload file", onError.toString());
-                              });
-
-                            }
-                          },
-                          child: Text("Save", style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22
-                          ),)),
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  } else {
+                                    SystemNavigator.pop();
+                                  }
+                                } else if (img != "") {
+                                  print("Uploading");
+                                  Dialogs.showLoaderDialog(context);
+                                  String? fN =
+                                      "${FirebaseAuth.instance.currentUser?.uid.toString()}.png";
+                                  Reference ref = FirebaseStorage.instance
+                                      .ref("profile")
+                                      .child(fN);
+                                  UploadTask uploadTask =
+                                      ref.putFile(File(img));
+                                  uploadTask.whenComplete(() async {
+                                    String url = await ref.getDownloadURL();
+                                    FirebaseFirestore.instance
+                                        .collection("users")
+                                        .doc(FirebaseAuth
+                                            .instance.currentUser?.uid)
+                                        .update({
+                                      "name": nameController.text,
+                                      "image": url,
+                                      "bio": bioController.text,
+                                    });
+                                    if (Navigator.canPop(context)) {
+                                      Navigator.pop(context);
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                            builder: (builder) => MyHomePage(
+                                                  title: '',
+                                                )),
+                                        (route) => false,
+                                      );
+                                    } else {
+                                      SystemNavigator.pop();
+                                      SystemNavigator.pop();
+                                    }
+                                    // print("Completed");
+                                    // print(url);
+                                  }).catchError((onError) {
+                                    setState(() {
+                                      _loading = false;
+                                    });
+                                    Dialogs.showAlertDialog(
+                                        context,
+                                        "Failed to upload file",
+                                        onError.toString());
+                                  });
+                                } else {
+                                  Navigator.of(context)
+                                      .pushAndRemoveUntil(
+                                    MaterialPageRoute(builder: (builder) => MyHomePage(title: "")),
+                                        (route) => false,
+                                  );
+                                }
+                              },
+                              child: Text(
+                                "Save",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 22),
+                              )),
                     ),
                   ),
                 ],

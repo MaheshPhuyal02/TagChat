@@ -33,11 +33,8 @@ class _MyHomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return  AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-        statusBarColor: Colors.white,
-        statusBarIconBrightness: Brightness.dark),
-    child: Scaffold(
+    return  Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -125,7 +122,7 @@ class _MyHomePageState extends State<WelcomePage> {
           ],
         ),
       ),
-    ));
+    );
   }
 
 }
