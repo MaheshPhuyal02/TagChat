@@ -248,8 +248,6 @@ class _MyHomePageState extends State<SignUpPage> {
                                                 "id": FirebaseAuth
                                                     .instance.currentUser?.uid,
                                               });
-
-
                                                 Navigator.pop(context);
                                                 Navigator.of(context)
                                                     .pushAndRemoveUntil(

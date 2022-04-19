@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -87,40 +88,11 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  // Future<void> getChatList() async {
-  //   CollectionReference reference = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(FirebaseAuth.instance.currentUser?.uid)
-  //       .collection("messages");
-  //   await reference
-  //       .orderBy("lastDate", descending: true)
-  //       .snapshots()
-  //       .listen((querySnapshot) {
-  //     mainChatList.clear();
-  //     querySnapshot.docs.forEach((element) {
-  //       Map<String, dynamic> mm = <String, dynamic>{
-  //         "id": element.get("id"),
-  //         "seen": element.get("seen"),
-  //         "herImg": element.get("herImage")!,
-  //         "lastMessage": element.get("lastMessage"),
-  //         "lastMessageType": element.get("lastMessageType"),
-  //         "lastDate": element.get("lastDate"),
-  //         "name": element.get("name"),
-  //         "tag": element.get("tag"),
-  //       };
-  //       //    print(element.doc.get("name"));
-  //       setState(() {
-  //         // mainChatList.clear();
-  //         mainChatList.add(mm);
-  //       });
-  //     });
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
     print(ConnectivityResult.none.name);
     return Scaffold(
+      backgroundColor: Colors.white,
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -139,17 +111,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: CircleAvatar(
                     radius: 56,
                     backgroundColor: Colors.white,
-                    child: ClipOval(
-                        child: img != ""
-                            ? (Image.network(
-                                img,
-                                fit: BoxFit.cover,
-                                height: 34,
-                                width: 34,
-                              ))
-                            : Image.asset("assets/user.png")),
-                  ),
-                )),
+                    child:  ClipOval(
+                        child: CachedNetworkImage(
+                          fit: BoxFit.cover,
+                          imageUrl: img,
+                          height: 36,
+                          width: 36,
+                          placeholder: (context, url) => Image.asset("assets/user.png"),
+                          errorWidget: (context, url, error) =>
+                              Image.asset("assets/user.png"),
+                ))))),
             Expanded(
               child: Container(
                 child: const Text(
@@ -234,10 +205,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                 .collection('users')
                                 .doc(FirebaseAuth.instance.currentUser?.uid)
                                 .collection("messages")
+                                .where("deleted", isEqualTo: false)
                                 .orderBy('lastDate', descending: true)
+                                .limit(30)
                                 .snapshots(),
                             builder: (context, chatSnapshot) {
-                              print("refresh");
+                             // if(chatSnapshot.data == null) return CircularProgressIndicator();
                               if (chatSnapshot.connectionState ==
                                   ConnectionState.waiting) {
                                 return Center(
@@ -251,150 +224,145 @@ class _MyHomePageState extends State<MyHomePage> {
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
                                     Expanded(
-                                      child: RefreshIndicator(
-                                        onRefresh: () async {},
-                                        child: ListView.builder(
-                                            scrollDirection: Axis.vertical,
-                                            shrinkWrap: true,
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-                                            itemCount: mainChatList.length,
-                                            itemBuilder: (BuildContext context,
-                                                int index) {
-                                              //  String name = mainChatList[index].name;
-                                              return InkWell(
-                                                  onTap: () {
-                                                    Navigator.of(context).push(
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                MessagesPage(
-                                                                  title: mainChatList
-                                                                              .length >
-                                                                          0
-                                                                      ? mainChatList[
-                                                                              index]
-                                                                          ["id"]
-                                                                      : "",
-                                                                  from:
-                                                                      "message",
-                                                                  herRealID: "",
-                                                                  herName: mainChatList[
-                                                                          index]
-                                                                      ["name"],
-                                                                  herTag: mainChatList[
-                                                                          index]
-                                                                      ["tag"],
-                                                                  herImage: mainChatList[
-                                                                          index]
-                                                                      [
-                                                                      "herImage"],
-                                                                )));
-                                                  },
-                                                  child: Card(
-                                                      margin: EdgeInsets.all(9),
-                                                      child: Padding(
-                                                        padding:
+                                      child: ListView.builder(
+                                          scrollDirection: Axis.vertical,
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: mainChatList.length,
+                                          itemBuilder: (BuildContext context,
+                                              int index) {
+                                            //  String name = mainChatList[index].name;
+                                            return InkWell(
+                                                onTap: () {
+                                                  Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              MessagesPage(
+                                                                title: mainChatList
+                                                                            .length >
+                                                                        0
+                                                                    ? mainChatList[
+                                                                            index]
+                                                                        ["id"]
+                                                                    : "",
+                                                                from:
+                                                                    "message",
+                                                                herRealID: "",
+                                                                herName: mainChatList[
+                                                                        index]
+                                                                    ["name"],
+                                                                herTag: mainChatList[
+                                                                        index]
+                                                                    ["tag"],
+                                                                herImage: mainChatList[
+                                                                        index]
+                                                                    [
+                                                                    "herImage"],
+                                                              )));
+                                                },
+                                                child: Card(
+                                                    margin: EdgeInsets.all(9),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .all(8.0),
+                                                      child: Container(
+                                                        margin:
                                                             const EdgeInsets
-                                                                .all(8.0),
-                                                        child: Container(
-                                                          margin:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 12,
-                                                                  right: 0,
-                                                                  top: 5,
-                                                                  bottom: 5),
-                                                          child: Row(
-                                                            children: [
-                                                              Container(
-                                                                height: 38,
-                                                                width: 38,
-                                                                child: ClipOval(
-                                                                    child: mainChatList[index]["herImage"] !=
-                                                                            ""
-                                                                        ? (Image
-                                                                            .network(
-                                                                            mainChatList[index]["herImage"],
-                                                                            fit:
-                                                                                BoxFit.fitHeight,
-                                                                          ))
-                                                                        : Image.asset(
-                                                                            "assets/user.png")),
-                                                                margin:
-                                                                    const EdgeInsets
-                                                                            .only(
-                                                                        left: 2,
-                                                                        right:
-                                                                            5),
-                                                              ),
-                                                              Expanded(
-                                                                child: Column(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .start,
-                                                                  mainAxisSize:
-                                                                      MainAxisSize
-                                                                          .max,
-                                                                  children: [
-                                                                    Container(
-                                                                      child:
-                                                                          Text(
-                                                                        mainChatList[index]
-                                                                            [
-                                                                            "name"],
-                                                                        style: const TextStyle(
-                                                                            fontSize:
-                                                                                20,
-                                                                            fontWeight:
-                                                                                FontWeight.w500),
-                                                                      ),
-                                                                      width: double
-                                                                          .infinity,
-                                                                    ),
-                                                                    Container(
-                                                                      child:
-                                                                          Text(
-                                                                        mainChatList[index]["lastMessageType"] ==
-                                                                                Constants.MESSAGE_TYPE_TEXT
-                                                                            ? mainChatList[index]["lastMessage"]
-                                                                            : "Sent a photo",
-                                                                        style:
-                                                                            const TextStyle(
+                                                                    .only(
+                                                                left: 12,
+                                                                right: 0,
+                                                                top: 5,
+                                                                bottom: 5),
+                                                        child: Row(
+                                                          children: [
+                                                            Container(
+                                                              height: 38,
+                                                              width: 38,
+                                                              child: ClipOval(
+                                                                  child: CachedNetworkImage(
+                                                                    fit: BoxFit.cover,
+                                                                    imageUrl: mainChatList[index]["herImage"],
+                                                                    placeholder: (context, url) => CircularProgressIndicator(),
+                                                                    errorWidget: (context, url, error) =>
+                                                                        Image.asset("assets/user.png"),
+                                                                  )),
+                                                              margin:
+                                                                  const EdgeInsets
+                                                                          .only(
+                                                                      left: 2,
+                                                                      right:
+                                                                          5),
+                                                            ),
+                                                            Expanded(
+                                                              child: Column(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .start,
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .max,
+                                                                children: [
+                                                                  Container(
+                                                                    child:
+                                                                        Text(
+                                                                      mainChatList[index]
+                                                                          [
+                                                                          "name"],
+                                                                      style: const TextStyle(
                                                                           fontSize:
-                                                                              16,
-                                                                        ),
-                                                                      ),
-                                                                      width: double
-                                                                          .infinity,
+                                                                              20,
+                                                                          fontWeight:
+                                                                              FontWeight.w500),
                                                                     ),
-                                                                  ],
-                                                                ),
+                                                                    width: double
+                                                                        .infinity,
+                                                                  ),
+                                                                  Container(
+                                                                    child:
+                                                                        Text(
+                                                                      mainChatList[index]["lastMessageType"] ==
+                                                                              Constants.MESSAGE_TYPE_TEXT
+                                                                          ? mainChatList[index]["lastMessage"]
+                                                                          : "Sent a photo",
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize:
+                                                                            16,
+                                                                      ),
+                                                                    ),
+                                                                    width: double
+                                                                        .infinity,
+                                                                  ),
+                                                                ],
                                                               ),
-                                                              Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                            .all(
-                                                                        8.0),
-                                                                child: Text(mainChatList[index]
-                                                                            [
-                                                                            "lastDate"] !=
-                                                                        null
-                                                                    ? getTimeAgo(
-                                                                        mainChatList[index]
-                                                                            [
-                                                                            "lastDate"])
-                                                                    : ""),
-                                                              ),
-                                                            ],
-                                                          ),
+                                                            ),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      8.0),
+                                                              child: Text(mainChatList[index]
+                                                                          [
+                                                                          "lastDate"] !=
+                                                                      null
+                                                                  ? getTimeAgo(
+                                                                      mainChatList[index]
+                                                                          [
+                                                                          "lastDate"])
+                                                                  : ""),
+                                                            ),
+                                                          ],
                                                         ),
-                                                      )));
-                                            }),
-                                      ),
+                                                      ),
+                                                    )));
+                                          }),
                                     ),
                                   ]);
                             });
-                      }),
+                      })
+
                 ],
               ),
             ),
@@ -459,6 +427,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                 context: context,
                                 builder: (BuildContext context) {
                                   initState() async {
+                                    var snap = FirebaseFirestore.instance.collection("users")
+                                        .doc(FirebaseAuth.instance.currentUser?.uid)
+                                        .collection("messages").where("tag", isEqualTo: searchTag)
+                                        .snapshots();
+
+                                        snap.forEach((element) {
+                                      element.docs.forEach((element) {
+                                        element.get("id");
+                                      });
+                                    });
                                     int cPos = checkIfExist(searchTag);
                                     if (cPos == -1) {
                                       var documentList =
@@ -564,12 +542,11 @@ class _MyHomePageState extends State<MyHomePage> {
     final date = s.toDate();
     return timeago.format(date).toString();
   }
-
   int checkIfExist(String v) {
     bool r = false;
     int pos = 0;
     int rePos = -1;
-    loop:
+
     mainChatList.forEach((element) {
       if (element["tag"] == v) {
         rePos = pos;

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hotmessage/Constants.dart';
 import 'package:hotmessage/MessageModel.dart';
+import 'package:hotmessage/Profile.dart';
 import 'package:hotmessage/UserModel.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -25,7 +27,12 @@ class chatDocsActivity extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: const MessagesPage(
-          title: 'Flutter Demo Home Page', from: "f", herRealID: "f", herName: "", herImage:  "", herTag: "",),
+        title: 'Flutter Demo Home Page',
+        from: "f",
+        herRealID: "f",
+        herName: "",
+        herImage: "",
+        herTag: "",),
     );
   }
 }
@@ -35,9 +42,9 @@ class MessagesPage extends StatefulWidget {
     required this.title,
     required this.from,
     required this.herRealID,
-     required this.herName,
-     required this.herTag,
-     required this.herImage,
+    required this.herName,
+    required this.herTag,
+    required this.herImage,
   })
       : super(key: key);
   final String title;
@@ -64,6 +71,8 @@ class _MyMessagePageState extends State<MessagesPage> {
   TextEditingController controller = TextEditingController();
   ScrollController listScrollController = ScrollController();
   bool _despose = false;
+  bool isBlocked = false;
+  bool sheBlocked = false;
   String name = "No Name";
   String herName = "No Name";
   String tag = "NOTAGGUY";
@@ -71,7 +80,6 @@ class _MyMessagePageState extends State<MessagesPage> {
 
   @override
   void initState() {
-
     key = widget.title;
     controller.removeListener(() {});
     // TODO: implement initState
@@ -87,39 +95,43 @@ class _MyMessagePageState extends State<MessagesPage> {
         } else {
           herID = reqID;
         }
-          FirebaseFirestore.instance
-              .collection("users")
-              .doc(myID)
-              .get()
-              .then((value) {
-              name = value["name"];
-              tag = value["tag"];
-            myImg = value["image"]!;
-          });
+        FirebaseFirestore.instance
+            .collection("users")
+            .doc(myID)
+            .get()
+            .then((value) {
+          print("listen blovked my id");
+          name = value["name"];
+          tag = value["tag"];
+          myImg = value["image"]!;
+
+
+        });
 
         FirebaseFirestore.instance
             .collection("users")
             .doc(herID)
             .get()
-            .then((value) {
+            .then((event) {
+              print(event.toString());
+
           // setState(() {
           if (widget.herTag != "" || widget.herName != "" ||
               widget.herImage != "") {
             print("Not null");
-            if (value["name"] != widget.herName ||
-                value["tag"] != widget.herTag ||
-                value["image"] != widget.herImage) {
+            if (event["name"] != widget.herName ||
+                event["tag"] != widget.herTag ||
+                event["image"] != widget.herImage) {
               setState(() {
-                herName = value["name"];
-                herTag = value["tag"];
-                herImg = value["image"];
+                herName = event["name"];
+                herTag = event["tag"];
+                herImg = event["image"];
               });
             }
           } else {
             print("NULL");
           }
         });
-
       } catch (e) {}
       if (widget.from == "search") {
         herID = widget.herRealID;
@@ -132,6 +144,32 @@ class _MyMessagePageState extends State<MessagesPage> {
 
         print("widget");
       }
+      FirebaseFirestore.instance.collection("users")
+          .doc(herID)
+          .collection("messages")
+          .doc(key)
+          .snapshots()
+          .listen((event) {
+        if(event["blocked"]!=null) {
+          print("listen blovked her id");
+          setState(() {
+            sheBlocked = event["blocked"];
+          });
+        }
+      });
+      FirebaseFirestore.instance.collection("users")
+          .doc(myID)
+          .collection("messages")
+          .doc(key)
+          .snapshots()
+          .listen((event) {
+        if(event["blocked"]!=null) {
+          print("listen blovked her id");
+          setState(() {
+            isBlocked = event["blocked"];
+          });
+        }
+      });
 
     });
     super.initState();
@@ -158,21 +196,25 @@ class _MyMessagePageState extends State<MessagesPage> {
           backgroundColor: Colors.white,
           title: Row(
             children: [
-            Container(
-            width: 44,
-            height: 42,
-             child: CircleAvatar(
-                radius: 56,
-                backgroundColor: Colors.white,
-                child: ClipOval(
-                    child:
-                    herImg !=  ""?(Image.network(
-                      herImg,
-                      fit: BoxFit.cover,
-                      height: 42,
-                      width: 44,
-                    )): Image.asset("assets/user.png")),
-              )),
+              Container(
+                  width: 44,
+                  height: 44,
+                  child: CircleAvatar(
+                    radius: 56,
+                    backgroundColor: Colors.white,
+                    child: ClipOval(
+                        child:
+                        CachedNetworkImage(
+                          fit: BoxFit.cover,
+                          height: 44,
+                          width: 44,
+                          imageUrl: herImg,
+                          placeholder: (context, url) =>
+                              CircularProgressIndicator(),
+                          errorWidget: (context, url, error) =>
+                              Image.asset("assets/user.png"),
+                        )),
+                  )),
               Expanded(
                 child: Container(
                   margin: EdgeInsets.only(left: 17),
@@ -190,18 +232,71 @@ class _MyMessagePageState extends State<MessagesPage> {
                     SizedBox(
                       width: double.infinity,
                       child: Text(
-                        "@" + herTag,
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          color: Color(0xff242424),
-                          fontSize: 12,
-                        )
+                          "@" + herTag,
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            color: Color(0xff242424),
+                            fontSize: 12,
+                          )
                       ),
                     )
                   ]),
                   alignment: Alignment.bottomLeft,
                 ),
               ),
+              PopupMenuButton(
+                  itemBuilder: (context) =>
+                  [
+                    PopupMenuItem(
+                      child: InkWell(child: Text("Delete Chat"),
+                      onTap:() async {
+
+
+                      },),
+                      value: 1,
+                      onTap: (){
+                        print("Deleting");
+                        List<String> del = [];
+                        del.add(uid.toString());
+                        for(int i=0; i< chatDocs.length; i++){
+                          
+                          FirebaseFirestore.instance.collection("chats")
+                              .doc(key)
+                              .collection("messages")
+                              .doc(chatDocs[i]["id"])
+                              .update({
+                            "notDeletedBy": FieldValue.arrayRemove(del)
+                          });
+                        }
+                        FirebaseFirestore.instance.collection("users")
+                            .doc(uid)
+                            .collection("messages")
+                            .doc(key)
+                            .update({
+                             "deleted": true
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                    PopupMenuItem(
+                      onTap: (){
+                        FirebaseFirestore.instance.collection("users")
+                            .doc(uid)
+                            .collection("messages")
+                            .doc(key)
+                            .update({
+                          "blocked": !isBlocked
+                        });
+                        setState(() {
+                          isBlocked = !isBlocked;
+                        });
+                      },
+                      child: Text(
+                       isBlocked?"Unblock":"Block", style: TextStyle(color: Colors.red),),
+                      value: 2,
+                    )
+                  ]
+              )
             ],
           ),
         ),
@@ -214,15 +309,16 @@ class _MyMessagePageState extends State<MessagesPage> {
                   child: CircularProgressIndicator(),
                 );
               }
-              return StreamBuilder(
 
+              print(uid);
+              return StreamBuilder(
                   stream: FirebaseFirestore.instance
                       .collection('chats')
                       .doc(key)
                       .collection("messages")
+                      .where("notDeletedBy", arrayContains: uid.toString())
                       .orderBy('dateTime', descending: true)
                       .snapshots(),
-
                   builder: (context, chatSnapshot) {
                     print("refresh");
                     if (chatSnapshot.connectionState ==
@@ -233,7 +329,7 @@ class _MyMessagePageState extends State<MessagesPage> {
                     }
                     chatDocs =
                         (chatSnapshot as AsyncSnapshot).data.docs;
-                    print(chatDocs.length);
+
                     return
                       Column(
                           mainAxisSize: MainAxisSize.max,
@@ -256,118 +352,154 @@ class _MyMessagePageState extends State<MessagesPage> {
 
                                       onVisibilityChanged: (
                                           VisibilityInfo info) {
-                                        if (chatDocs[index]["senderID"] !=
-                                            myID && !chatDocs[index]["seen"]) {
-                                          FirebaseFirestore.instance.collection(
-                                              "chats")
-                                              .doc(key)
-                                              .collection("messages")
-                                              .doc(chatDocs[index]["id"])
-                                              .update({
-                                            "seen": true
-                                          });
+                                        if(chatDocs != null) {
+                                          if (chatDocs[index]["senderID"] !=
+                                              myID &&
+                                              !chatDocs[index]["seen"]) {
+                                            FirebaseFirestore.instance
+                                                .collection(
+                                                "chats")
+                                                .doc(key)
+                                                .collection("messages")
+                                                .doc(chatDocs[index]["id"])
+                                                .update({
+                                              "seen": true
+                                            });
+                                          }
                                         }
                                       },
-                                      child: Row(
-                                          mainAxisAlignment:
-                                          chatDocs[index]["senderID"] == uid
-                                              ? MainAxisAlignment.end
-                                              : MainAxisAlignment.start,
-                                          children: [
-                                            Flexible(
-                                                child: Container(
-                                                    padding: EdgeInsets.only(
-                                                        left: 6,
-                                                        right: 6,
-                                                        top: 8,
-                                                        bottom: 8),
-                                                    margin: EdgeInsets.only(
-                                                        left: chatDocs[index]
-                                                        ["senderID"] ==
-                                                            uid
-                                                            ? 100
-                                                            : 10,
-                                                        right: chatDocs[index]
-                                                        ["senderID"] ==
-                                                            uid
-                                                            ? 10
-                                                            : 100,
-                                                        top: 7),
-                                                    decoration: BoxDecoration(
-                                                        color: chatDocs[index]
-                                                        ["senderID"] ==
-                                                            uid
-                                                            ? Colors.blue
-                                                            : Color(0xffe5e5e5),
-                                                        borderRadius: BorderRadius
-                                                            .all(
-                                                            Radius.circular(
-                                                                8.0))),
-                                                    child: Column(
-                                                      mainAxisSize: MainAxisSize
-                                                          .min,
-                                                      children: <Widget>[
-                                                        Container(
-                                                          child:
-                                                         chatDocs[index]["messageType"] == Constants.MESSAGE_TYPE_TEXT?
-                                                      Text(
-                                                            message,
-                                                            style: TextStyle(
-                                                                color: chatDocs[index]["senderID"] ==
-                                                                    uid
-                                                                    ? Colors
-                                                                    .white
-                                                                    : Colors
-                                                                    .black,
-                                                                fontSize: 19),
-                                                          ):
-                                                          Image.network(message),
-                                                        ),
-                                                        SizedBox(
-                                                          width: 8.0,
-                                                        ),
-                                                        Container(
-                                                          child: Padding(
-                                                            padding: EdgeInsets
-                                                                .only(
-                                                                top: 6.0),
-                                                            child: Text(
-                                                              index == 0 ?
-                                                              chatDocs[index]["seen"]?
-                                                              getTimeAgo(chatDocs[index]['dateTime'])+" Seen"
-                                                                  : getTimeAgo(chatDocs[index]['dateTime'])+  " Delivered"
-                                                              : getTimeAgo(chatDocs[index]['dateTime']),
-                                                              style: TextStyle(
-                                                                fontSize: 11.0,
-                                                                color: chatDocs[index]
-                                                                [
-                                                                "senderID"] ==
-                                                                    uid
-                                                                    ? Colors
-                                                                    .white60
-                                                                    : Colors
-                                                                    .black45,
+                                      child: InkWell(
+                                        onLongPress: (){
+                                          showActionAlert(context);
+                                        },
+                                        child: Row(
+                                            mainAxisAlignment:
+                                            chatDocs[index]["senderID"] == uid
+                                                ? MainAxisAlignment.end
+                                                : MainAxisAlignment.start,
+                                            children: [
+                                              Flexible(
+                                                  child: Container(
+                                                      padding: EdgeInsets.only(
+                                                          left: 6,
+                                                          right: 6,
+                                                          top: 8,
+                                                          bottom: 8),
+                                                      margin: EdgeInsets.only(
+                                                          left: chatDocs[index]
+                                                          ["senderID"] ==
+                                                              uid
+                                                              ? 100
+                                                              : 10,
+                                                          right: chatDocs[index]
+                                                          ["senderID"] ==
+                                                              uid
+                                                              ? 10
+                                                              : 100,
+                                                          top: 7),
+                                                      decoration: BoxDecoration(
+                                                          color: chatDocs[index]
+                                                          ["senderID"] ==
+                                                              uid
+                                                              ? Colors.blue
+                                                              : Color(0xffe5e5e5),
+                                                          borderRadius: BorderRadius
+                                                              .all(
+                                                              Radius.circular(
+                                                                  8.0))),
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize
+                                                            .min,
+                                                        children: <Widget>[
+                                                          Container(
+                                                              child:
+                                                              chatDocs[index]["messageType"] ==
+                                                                  Constants
+                                                                      .MESSAGE_TYPE_TEXT
+                                                                  ?
+                                                              Text(
+                                                                message,
+                                                                style: TextStyle(
+                                                                    color: chatDocs[index]["senderID"] ==
+                                                                        uid
+                                                                        ? Colors
+                                                                        .white
+                                                                        : Colors
+                                                                        .black,
+                                                                    fontSize: 19),
+                                                              )
+                                                                  :
+                                                              CachedNetworkImage(
+                                                                fit: BoxFit.cover,
+                                                                imageUrl: message,
+                                                                placeholder: (
+                                                                    context,
+                                                                    url) =>
+                                                                    CircularProgressIndicator(),
+                                                                errorWidget: (
+                                                                    context, url,
+                                                                    error) =>
+                                                                    Image.asset(
+                                                                        "assets/user.png"),
+                                                              )),
+                                                          SizedBox(
+                                                            width: 8.0,
+                                                          ),
+                                                          Container(
+                                                            child: Padding(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                  top: 6.0),
+                                                              child: Text(
+                                                                index == 0 ?
+                                                                chatDocs[index]["seen"]
+                                                                    ?
+                                                                getTimeAgo(
+                                                                    chatDocs[index]['dateTime']) +
+                                                                    " Seen"
+                                                                    : getTimeAgo(
+                                                                    chatDocs[index]['dateTime']) +
+                                                                    " Delivered"
+                                                                    : getTimeAgo(
+                                                                    chatDocs[index]['dateTime']),
+                                                                style: TextStyle(
+                                                                  fontSize: 11.0,
+                                                                  color: chatDocs[index]
+                                                                  [
+                                                                  "senderID"] ==
+                                                                      uid
+                                                                      ? Colors
+                                                                      .white60
+                                                                      : Colors
+                                                                      .black45,
+                                                                ),
+                                                                textAlign:
+                                                                TextAlign.right,
                                                               ),
-                                                              textAlign:
-                                                              TextAlign.right,
                                                             ),
                                                           ),
-                                                        ),
-                                                        SizedBox(
-                                                          width: 8.0,
-                                                        ),
-                                                      ],
-                                                    )))
-                                          ]),
+                                                          SizedBox(
+                                                            width: 8.0,
+                                                          ),
+                                                        ],
+                                                      )))
+                                            ]),
+                                      ),
                                     );
                                   }),),
+                            !getBlocked()?
                             Row(
                               children: [
                                 InkWell(
                                   onTap: () async {
-                                    final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 500, maxHeight: 500, imageQuality: 50);
-                                    if(image?.path != null) {
-                                      createMessage(image!.path, Constants.MESSAGE_TYPE_IMAGE);
+                                    final XFile? image = await ImagePicker()
+                                        .pickImage(source: ImageSource.gallery,
+                                        maxWidth: 500,
+                                        maxHeight: 500,
+                                        imageQuality: 50);
+                                    if (image?.path != null) {
+                                      createMessage(image!.path,
+                                          Constants.MESSAGE_TYPE_IMAGE);
                                     }
                                   },
                                   child: SizedBox(
@@ -409,7 +541,8 @@ class _MyMessagePageState extends State<MessagesPage> {
                                 ),
                                 InkWell(
                                   onTap: () {
-                                    createMessage(writeMessaged, Constants.MESSAGE_TYPE_TEXT);
+                                    createMessage(writeMessaged,
+                                        Constants.MESSAGE_TYPE_TEXT);
                                   },
                                   child: SizedBox(
                                     height: 42,
@@ -422,20 +555,41 @@ class _MyMessagePageState extends State<MessagesPage> {
                                   ),
                                 ),
                               ],
+                            ):
+                            Column(
+                              children: [
+                                Container(
+                                  margin: EdgeInsets.only(top: 10),
+                                  color: Colors.black54,
+                                  height: 1,
+                                  width: double.infinity,
+                                ),
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  width: double.infinity,
+                                  alignment: Alignment.center,
+                                  child: Text("You can't reply to this conversation anymore"),
+                                ),
+                              ],
                             )
                           ]);
                   });
             }));
   }
-  String getTimeAgo(s){
+
+  String getTimeAgo(s) {
     final date = s.toDate();
     return timeago.format(date).toString();
   }
-  createMessage(message, type){
-    if(type == Constants.MESSAGE_TYPE_IMAGE) {
+
+  createMessage(message, type) {
+    if (type == Constants.MESSAGE_TYPE_IMAGE) {
       Reference ref = FirebaseStorage.instance.ref("profile")
           .child(key)
-          .child(FirebaseFirestore.instance.collection("chats").doc().id + ".png");
+          .child(FirebaseFirestore.instance
+          .collection("chats")
+          .doc()
+          .id + ".png");
       UploadTask uploadTask = ref.putFile(File(message));
       uploadTask.whenComplete(() async {
         String url = await ref.getDownloadURL();
@@ -445,8 +599,14 @@ class _MyMessagePageState extends State<MessagesPage> {
       sendMessage(message, type);
     }
   }
+  bool getBlocked(){
+    if(isBlocked || sheBlocked){
+      return true;
+    } else {
+      return false;
+    }
+}
   sendMessage(message, type) {
-
     if (message
         .toString()
         .isNotEmpty) {
@@ -469,6 +629,9 @@ class _MyMessagePageState extends State<MessagesPage> {
           .doc()
           .id
           .toString();
+      List<String> notDeletors = [];
+      notDeletors.add(myID.toString());
+      notDeletors.add(herID.toString());
       FirebaseFirestore.instance
           .collection("chats")
           .doc(key)
@@ -478,6 +641,7 @@ class _MyMessagePageState extends State<MessagesPage> {
         'dateTime': myTimeStamp,
         'message': message,
         'seen': false,
+        'notDeletedBy': notDeletors,
         'id': createdID,
         'senderID': FirebaseAuth.instance.currentUser?.uid,
         'messageType': type,
@@ -493,6 +657,8 @@ class _MyMessagePageState extends State<MessagesPage> {
         'lastMessage': message,
         'lastMessageType': type,
         'lastDate': myTimeStamp,
+        'deleted': false,
+        'blocked': false,
         'name': herName,
         'seen': false,
         'tag': herTag,
@@ -509,10 +675,44 @@ class _MyMessagePageState extends State<MessagesPage> {
         'lastDate': myTimeStamp,
         'lastMessageType': type,
         'name': name,
+        'deleted': false,
+        'blocked': false,
         'seen': false,
         'tag': tag,
       });
       controller.text = "";
     }
   }
+  Future<void> showActionAlert(context) async {
+    return showDialog<void>(
+        context: context,// user must tap button!
+        builder: (BuildContext context) {    // TODO: implement build
+          return AlertDialog(
+
+            content:
+            SizedBox(
+              width: 200,
+              child: ListView(
+                shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  children: [
+                    ListTile(
+                      leading: Icon(Icons.copy, color: Colors.black,),
+                      title: Text('Copy'),
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.forward, color: Colors.black,),
+                      title: Text('Forward'),
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.delete, color: Colors.red,),
+                      title: Text('Delete', style: TextStyle(color:Colors.red),),
+                    ),
+
+                  ]),
+            ),
+          );
+        });
+  }
 }
+

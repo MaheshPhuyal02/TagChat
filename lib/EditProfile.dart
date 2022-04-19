@@ -332,7 +332,6 @@ class _MyHomePageState extends State<EditProfilePage> {
                                       "image": url,
                                       "bio": bioController.text,
                                     });
-                                    if (Navigator.canPop(context)) {
                                       Navigator.pop(context);
                                       Navigator.of(context).pushAndRemoveUntil(
                                         MaterialPageRoute(
@@ -341,10 +340,7 @@ class _MyHomePageState extends State<EditProfilePage> {
                                                 )),
                                         (route) => false,
                                       );
-                                    } else {
-                                      SystemNavigator.pop();
-                                      SystemNavigator.pop();
-                                    }
+
                                     // print("Completed");
                                     // print(url);
                                   }).catchError((onError) {
